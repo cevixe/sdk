@@ -4,8 +4,10 @@ go 1.19
 
 require (
 	github.com/aws/aws-lambda-go v1.34.1
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.3
 	github.com/aws/aws-sdk-go-v2/feature/dynamodbstreams/attributevalue v1.10.2
-	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.22
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.17.4
+	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.23
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.1
 	github.com/aws/aws-sdk-go-v2/service/sns v1.18.4
 	github.com/aws/jsii-runtime-go v1.71.0
@@ -21,7 +23,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.25 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.19 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.16 // indirect
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.17.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.20 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.19 // indirect
