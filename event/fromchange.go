@@ -47,11 +47,13 @@ func getDynamoDBEntityRecord(record events.DynamoDBEventRecord) *entityRecord {
 	log.Printf("EventRecord: %s\n", jsonString)
 
 	if record.EventName == "REMOVE" {
+		log.Printf("EventName failed: %s\n", record.EventName)
 		return nil
 	}
 
 	dynRecord, err := dynamodb.FromDynamoDBEventRecord(record)
 	if err != nil {
+		log.Printf("dynRecord failed: %v\n", err)
 		return nil
 	}
 
@@ -59,10 +61,13 @@ func getDynamoDBEntityRecord(record events.DynamoDBEventRecord) *entityRecord {
 	entityRecord := &entityRecord{}
 	err = attributevalue.UnmarshalMap(image, entityRecord)
 	if err != nil {
+		log.Printf("entityRecord failed: %v\n", err)
 		return nil
 	}
 
 	if !validDynamoDBEntityRecordMandatoryFields(entityRecord) {
+		entityString := json.Marshal(entityRecord)
+		log.Printf("validation failed: %s\n", entityString)
 		return nil
 	}
 
