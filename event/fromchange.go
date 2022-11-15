@@ -43,6 +43,9 @@ func From_DynamoDBEventRecord(record events.DynamoDBEventRecord) Event {
 
 func getDynamoDBEntityRecord(record events.DynamoDBEventRecord) *entityRecord {
 
+	jsonString := json.Marshal(record)
+	log.Printf("EventRecord: %s\n", jsonString)
+
 	if record.EventName == "REMOVE" {
 		return nil
 	}
