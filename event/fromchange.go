@@ -61,6 +61,10 @@ func getDynamoDBEntityRecord(record events.DynamoDBEventRecord) *entityRecord {
 	image := dynRecord.Dynamodb.NewImage
 	log.Printf("newImage ok: %v\n", json.Marshal(image))
 	entityRecord := &entityRecord{}
+	genericMap := make(map[string]interface{})
+	attributevalue.UnmarshalMap(image, &genericMap)
+	genericMapString := json.Marshal(genericMap)
+	log.Printf("generic map: %s\n", genericMapString)
 	err = attributevalue.UnmarshalMap(image, entityRecord)
 	if err != nil {
 		log.Printf("entityRecord failed: %v\n", err)
