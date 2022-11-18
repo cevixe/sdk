@@ -2,8 +2,8 @@ package command
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/cevixe/sdk/common/iso8601"
 	"github.com/cevixe/sdk/common/json"
 
 	"github.com/aws/aws-sdk-go-v2/service/sns"
@@ -64,7 +64,7 @@ func generateMessageAttributes(command Command) map[string]types.MessageAttribut
 		},
 		"time": {
 			DataType:    jsii.String("String"),
-			StringValue: jsii.String(iso8601.FromTime(command.Time())),
+			StringValue: jsii.String(command.Time().Format(time.RFC3339)),
 		},
 		"datacontenttype": {
 			DataType:    jsii.String("String"),

@@ -3,8 +3,8 @@ package command
 import (
 	"time"
 
-	"github.com/cevixe/sdk/common/iso8601"
 	"github.com/cevixe/sdk/common/json"
+	"github.com/relvacode/iso8601"
 )
 
 type impl struct {
@@ -31,7 +31,8 @@ func (c *impl) Type() string {
 }
 
 func (c *impl) Time() time.Time {
-	return iso8601.ToTime(c.CommandTime)
+	time, _ := iso8601.ParseString(c.CommandTime)
+	return time
 }
 
 func (c *impl) ContentType() string {

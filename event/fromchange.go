@@ -1,162 +1,155 @@
 package event
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodbstreams/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams/types"
-	"github.com/aws/jsii-runtime-go"
 	"github.com/cevixe/sdk/common/dynamodb"
-	"github.com/cevixe/sdk/common/iso8601"
-	"github.com/cevixe/sdk/common/json"
-	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stoewer/go-strcase"
 )
 
-type entityRecord struct {
-	Type         *string                 `json:"__typename"`
-	ID           *string                 `json:"id"`
-	Version      *uint64                 `json:"version"`
-	CreatedAt    *time.Time              `json:"createdAt"`
-	CreatedBy    *string                 `json:"createdBy"`
-	UpdatedAt    *time.Time              `json:"updatedAt"`
-	UpdatedBy    *string                 `json:"updatedBy"`
-	Archived     *bool                   `json:"__archived"`
-	Transaction  *string                 `json:"__transaction"`
-	EventType    *string                 `json:"__eventtype"`
-	EventVersion *uint64                 `json:"__eventversion"`
-	EventData    *map[string]interface{} `json:"__eventdata"`
-}
+type Map = map[string]interface{}
 
-func From_DynamoDBEventRecord(record events.DynamoDBEventRecord) Event {
+func From_DynamoDBEventRecord(record events.DynamoDBEventRecord) (Event, error) {
 
-	entityRecord := getDynamoDBEntityRecord(record)
-	if entityRecord == nil {
-		log.Fatal("invalid dynamodb stream record")
+	entityMap, err := getDynamoDBEntityMap(record)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid dynamodb stream record")
 	}
 
-	return mapEventFromDynamoDBEntityRecord(entityRecord)
+	event, err := mapEventFromEntityMap(entityMap)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot map event from entity map")
+	}
+
+	return event, nil
 }
 
-func getDynamoDBEntityRecord(record events.DynamoDBEventRecord) *entityRecord {
-
-	jsonString := json.Marshal(record)
-	log.Printf("EventRecord: %s\n", jsonString)
+func getDynamoDBEntityMap(record events.DynamoDBEventRecord) (Map, error) {
 
 	if record.EventName == "REMOVE" {
-		log.Printf("EventName failed: %s\n", record.EventName)
-		return nil
+		return nil, errors.New("physical record deletion not allowed")
 	}
 
 	dynRecord, err := dynamodb.FromDynamoDBEventRecord(record)
 	if err != nil {
-		log.Printf("dynRecord failed: %v\n", err)
-		return nil
+		return nil, errors.Wrap(err, "invalid dynamodb event record")
 	}
-	log.Printf("dynRecord ok: %v\n", json.Marshal(dynRecord))
 
+	entityMap := make(Map)
 	image := dynRecord.Dynamodb.NewImage
-	log.Printf("newImage ok: %v\n", json.Marshal(image))
-	entityRecord := &entityRecord{}
-	genericMap := make(map[string]interface{})
-	attributevalue.UnmarshalMap(image, &genericMap)
-	genericMapString := json.Marshal(genericMap)
-	log.Printf("generic map: %s\n", genericMapString)
-	err = attributevalue.UnmarshalMap(image, entityRecord)
-	if err != nil {
-		log.Printf("entityRecord failed: %v\n", err)
-		return nil
+	if err = attributevalue.UnmarshalMap(image, &entityMap); err != nil {
+		return nil, errors.Wrap(err, "invalid dynamodb record")
 	}
 
-	if !validDynamoDBEntityRecordMandatoryFields(entityRecord) {
-		entityString := json.Marshal(entityRecord)
-		log.Printf("validation failed: %s\n", entityString)
-		return nil
+	if err = validateEntityMapRequiredFields(entityMap); err != nil {
+		return nil, errors.Wrap(err, "invalid entity map")
 	}
 
-	setDynamoDBEntityRecordDefaultValues(dynRecord, entityRecord)
+	setEntityMapDefaultValues(dynRecord, entityMap)
 
-	return entityRecord
+	return entityMap, nil
 }
 
-func validDynamoDBEntityRecordMandatoryFields(entityRecord *entityRecord) bool {
-	if entityRecord.Type == nil ||
-		entityRecord.ID == nil ||
-		entityRecord.Version == nil ||
-		entityRecord.UpdatedBy == nil ||
-		entityRecord.UpdatedAt == nil ||
-		entityRecord.CreatedBy == nil ||
-		entityRecord.CreatedAt == nil ||
-		entityRecord.Archived == nil {
-		return false
+func validateEntityMapRequiredFields(entityMap Map) error {
+	requiredFields := []string{
+		"__typename",
+		"__space",
+		"__status",
+		"__transaction",
+		"id",
+		"version",
+		"updatedBy",
+		"updatedAt",
+		"createdBy",
+		"createdAt",
 	}
-	return true
+	for _, field := range requiredFields {
+		if entityMap[field] == nil {
+			message := fmt.Sprintf("required field `%s` not found", field)
+			return errors.New(message)
+		}
+	}
+	return nil
 }
 
-func setDynamoDBEntityRecordDefaultValues(dynRecord types.Record, entityRecord *entityRecord) {
+func setEntityMapDefaultValues(dynRecord types.Record, entityMap Map) {
 
-	if entityRecord.Transaction == nil {
-		entityRecord.Transaction = jsii.String(uuid.NewString())
-	}
-
-	if entityRecord.EventType == nil {
-		if *entityRecord.Archived {
-			entityRecord.EventType = jsii.String("deleted")
+	if entityMap["__eventtype"] == nil {
+		if entityMap["__status"] == nil {
+			entityMap["__eventtype"] = "deleted"
 		} else if dynRecord.EventName == "INSERT" {
-			entityRecord.EventType = jsii.String("created")
+			entityMap["__eventtype"] = "created"
 		} else {
-			entityRecord.EventType = jsii.String("updated")
+			entityMap["__eventtype"] = "updated"
 		}
 	}
 
-	if entityRecord.EventVersion == nil {
-		var defaultVersion uint64 = 1
-		entityRecord.EventVersion = &defaultVersion
+	if entityMap["__eventversion"] == nil {
+		entityMap["__eventversion"] = 1.0
 	}
 
-	if entityRecord.EventData == nil {
-		reservedFields := []string{
-			"__typename", "__section", "__archived", "__transaction",
-			"__eventtype", "__eventversion", "__eventdata",
+	if entityMap["__eventdata"] == nil {
+		privateFields := []string{
+			"__typename",
+			"__space",
+			"__status",
+			"__transaction",
+			"__eventtype",
+			"__eventversion",
+			"__eventdata",
 		}
 		data := make(map[string]interface{})
-		err := attributevalue.UnmarshalMap(dynRecord.Dynamodb.NewImage, data)
-		if err != nil {
-			log.Fatalf("cannot unmarshall dynamodb event record: %v", err)
+		for field, value := range entityMap {
+			data[field] = value
 		}
-		for _, item := range reservedFields {
-			delete(data, item)
+		for _, field := range privateFields {
+			delete(data, field)
 		}
+		entityMap["__eventdata"] = data
 	}
 }
 
-func mapEventFromDynamoDBEntityRecord(entityRecord *entityRecord) Event {
+func mapEventFromEntityMap(entityMap Map) (Event, error) {
 
 	event := &impl{}
 
-	event.EventSource = fmt.Sprintf("/domain/%s/%s",
-		strcase.KebabCase(*entityRecord.Type), *entityRecord.ID)
+	entityId := entityMap["id"].(string)
+	entityTypename := entityMap["__typename"].(string)
+	entityVersion := entityMap["version"].(float64)
+	entityUpdatedAt := entityMap["updatedAt"].(string)
+	entityUpdatedBy := entityMap["updatedBy"].(string)
+	entityTransaction := entityMap["__transaction"].(string)
 
-	event.EventID = fmt.Sprintf("%20d", *entityRecord.Version)
+	eventType := entityMap["__eventtype"].(string)
+	eventVersion := entityMap["__eventversion"].(float64)
+	eventData := entityMap["__eventdata"]
+
+	event.EventSource = fmt.Sprintf("/domain/%s/%s",
+		strcase.KebabCase(entityTypename), entityId)
+
+	event.EventID = fmt.Sprintf("%20d", int(entityVersion))
 
 	event.EventType = fmt.Sprintf("%s.%s.v%d",
-		strcase.KebabCase(*entityRecord.Type),
-		strcase.KebabCase(*entityRecord.EventType),
-		*entityRecord.EventVersion,
+		strcase.KebabCase(entityTypename),
+		strcase.KebabCase(eventType),
+		int(eventVersion),
 	)
 
-	event.EventTime = iso8601.FromTime(*entityRecord.UpdatedAt)
-
+	event.EventTime = entityUpdatedAt
 	event.EventContentType = "application/json"
+	event.EventUser = entityUpdatedBy
+	event.EventTransaction = entityTransaction
 
-	event.EventUser = *entityRecord.UpdatedBy
+	eventDataString, err := json.Marshal(eventData)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot marshal event data")
+	}
+	event.EventData = string(eventDataString)
 
-	event.EventTransaction = *entityRecord.Transaction
-
-	event.EventData = json.Marshal(*entityRecord.EventData)
-
-	return event
+	return event, nil
 }

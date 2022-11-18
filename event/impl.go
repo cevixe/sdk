@@ -3,8 +3,8 @@ package event
 import (
 	"time"
 
-	"github.com/cevixe/sdk/common/iso8601"
 	"github.com/cevixe/sdk/common/json"
+	"github.com/relvacode/iso8601"
 )
 
 type impl struct {
@@ -31,7 +31,8 @@ func (e *impl) Type() string {
 }
 
 func (e *impl) Time() time.Time {
-	return iso8601.ToTime(e.EventTime)
+	time, _ := iso8601.ParseString(e.EventTime)
+	return time
 }
 
 func (e *impl) ContentType() string {

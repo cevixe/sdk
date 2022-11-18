@@ -10,8 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams/types"
 	"github.com/aws/jsii-runtime-go"
 	"github.com/cevixe/sdk/common/dynamodb"
-	"github.com/cevixe/sdk/common/iso8601"
-	"github.com/cevixe/sdk/common/json"
 	"github.com/google/uuid"
 	"github.com/stoewer/go-strcase"
 )
@@ -103,7 +101,7 @@ func mapCommandFromDynamoDBCommandRecord(commandRecord *commandRecord) Command {
 		*commandRecord.Version,
 	)
 
-	command.CommandTime = iso8601.FromTime(*commandRecord.Time)
+	//command.CommandTime = iso8601.FromTime(*commandRecord.Time)
 
 	command.CommandContentType = "application/json"
 
@@ -111,7 +109,7 @@ func mapCommandFromDynamoDBCommandRecord(commandRecord *commandRecord) Command {
 
 	command.CommandTransaction = *commandRecord.Transaction
 
-	command.CommandData = json.Marshal(*commandRecord.Data)
+	//command.CommandData = json.Marshal(*commandRecord.Data)
 
 	return command
 }

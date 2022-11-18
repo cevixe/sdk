@@ -13,6 +13,8 @@ require (
 	github.com/aws/jsii-runtime-go v1.71.0
 	github.com/aws/smithy-go v1.13.4
 	github.com/google/uuid v1.3.0
+	github.com/pkg/errors v0.9.1
+	github.com/relvacode/iso8601 v1.1.0
 	github.com/stoewer/go-strcase v1.2.0
 )
 
