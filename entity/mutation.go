@@ -18,7 +18,7 @@ type Mutation interface {
 }
 
 type mutationImpl struct {
-	Actor           string
+	Author          string
 	Target          Entity
 	Trigger         string
 	Transaction     string
@@ -34,9 +34,9 @@ func newMutation(
 	newState interface{},
 ) Mutation {
 
-	cvx := cvxcontext.GetCevixeContext(ctx)
+	cvx := cvxcontext.GetExecutionContenxt(ctx)
 	return &mutationImpl{
-		Actor:         cvx.Actor,
+		Author:        cvx.Author,
 		Trigger:       cvx.Trigger,
 		Transaction:   cvx.Transaction,
 		Target:        target,
@@ -66,7 +66,7 @@ func (m *mutationImpl) Execute() Entity {
 		EntityVersion:    m.Target.Version() + 1,
 		EntityStatus:     EntityStatus_Alive,
 		EntityData:       m.NewEntityData,
-		EntityUpdatedBy:  m.Actor,
+		EntityUpdatedBy:  m.Author,
 		EntityUpdatedAt:  time.Now(),
 		EntityCreatedAt:  m.Target.CreatedAt(),
 		EntityCreatedBy:  m.Target.CreatedBy(),

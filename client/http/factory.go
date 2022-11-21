@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-func NewHttpClient(httpSettings ClientSettings) (*http.Client, error) {
+func NewClient(httpSettings ClientSettings) (*http.Client, error) {
 
 	var client http.Client
 	tr := &http.Transport{
@@ -38,9 +38,9 @@ func NewHttpClient(httpSettings ClientSettings) (*http.Client, error) {
 	return &client, nil
 }
 
-func NewDefaultHttpClient() *http.Client {
+func NewDefaultClient() *http.Client {
 
-	httpClient, err := NewHttpClient(ClientSettings{
+	httpClient, err := NewClient(ClientSettings{
 		Connect:          5 * time.Second,
 		ExpectContinue:   1 * time.Second,
 		IdleConn:         90 * time.Second,

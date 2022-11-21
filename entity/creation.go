@@ -20,9 +20,9 @@ type Creation interface {
 }
 
 func Create(ctx context.Context, state interface{}) Creation {
-	cvx := cvxcontext.GetCevixeContext(ctx)
+	cvx := cvxcontext.GetExecutionContenxt(ctx)
 	return &creationImpl{
-		Actor:       cvx.Actor,
+		Author:      cvx.Author,
 		Trigger:     cvx.Trigger,
 		Transaction: cvx.Transaction,
 		State:       state,
@@ -30,7 +30,7 @@ func Create(ctx context.Context, state interface{}) Creation {
 }
 
 type creationImpl struct {
-	Actor           string
+	Author          string
 	Trigger         string
 	Transaction     string
 	State           interface{}
@@ -62,9 +62,9 @@ func (c *creationImpl) Execute() Entity {
 		EntityVersion:    1,
 		EntityStatus:     EntityStatus_Alive,
 		EntityData:       c.State,
-		EntityUpdatedBy:  c.Actor,
+		EntityUpdatedBy:  c.Author,
 		EntityUpdatedAt:  now,
-		EntityCreatedBy:  c.Actor,
+		EntityCreatedBy:  c.Author,
 		EntityCreatedAt:  now,
 		LastTransaction:  c.Transaction,
 		LastEventTrigger: c.Trigger,

@@ -22,8 +22,8 @@ type FindByProps struct {
 
 func FindBy(ctx context.Context, props *FindByProps) (EntityPage, error) {
 
-	cvx := cvxcontext.GetCevixeContext(ctx)
-	app := cvx.ApplicationName
+	cvxini := cvxcontext.GetInitContenxt(ctx)
+	app := cvxini.AppName
 	domain := strcase.KebabCase(props.Typename)
 	table := fmt.Sprintf("dyn-%s-%s-statestore", app, domain)
 
@@ -62,7 +62,7 @@ func FindBy(ctx context.Context, props *FindByProps) (EntityPage, error) {
 		}
 	}
 
-	output, err := cvx.DynamodbClient.Query(ctx, input)
+	output, err := cvxini.DynamodbClient.Query(ctx, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get dynamodb entity by id")
 	}

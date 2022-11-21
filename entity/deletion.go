@@ -18,7 +18,7 @@ type Deletion interface {
 }
 
 type deletionImpl struct {
-	Actor           string
+	Author          string
 	Trigger         string
 	Transaction     string
 	Target          *entityImpl
@@ -28,9 +28,9 @@ type deletionImpl struct {
 }
 
 func newDeletion(ctx context.Context, target *entityImpl) Deletion {
-	cvx := cvxcontext.GetCevixeContext(ctx)
+	cvx := cvxcontext.GetExecutionContenxt(ctx)
 	return &deletionImpl{
-		Actor:       cvx.Actor,
+		Author:      cvx.Author,
 		Trigger:     cvx.Trigger,
 		Transaction: cvx.Transaction,
 		Target:      target,
@@ -59,7 +59,7 @@ func (d *deletionImpl) Execute() Entity {
 		EntityVersion:    d.Target.Version() + 1,
 		EntityStatus:     EntityStatus_Dead,
 		EntityData:       d.Target.EntityData,
-		EntityUpdatedBy:  d.Actor,
+		EntityUpdatedBy:  d.Author,
 		EntityUpdatedAt:  time.Now(),
 		EntityCreatedAt:  d.Target.CreatedAt(),
 		EntityCreatedBy:  d.Target.CreatedBy(),

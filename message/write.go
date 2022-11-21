@@ -2,6 +2,7 @@ package message
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -11,22 +12,22 @@ import (
 )
 
 func Write(ctx context.Context, msg ...Message) error {
-	cvx := cvxcontext.GetCevixeContext(ctx)
-	input, err := generateTransactWriteItemsInput(cvx, msg...)
+	cvxini := cvxcontext.GetInitContenxt(ctx)
+	input, err := generateTransactWriteItemsInput(cvxini.AppName, msg...)
 	if err != nil {
 		return errors.Wrap(err, "cannot generate dynamodb transaction input")
 	}
-	if _, err = cvx.DynamodbClient.TransactWriteItems(ctx, input); err != nil {
+	if _, err = cvxini.DynamodbClient.TransactWriteItems(ctx, input); err != nil {
 		return errors.Wrap(err, "cannot execute dynamodb transaction")
 	}
 	return nil
 }
 
-func generateTransactWriteItemsInput(cvx *cvxcontext.CevixeContext, msg ...Message) (*dynamodb.TransactWriteItemsInput, error) {
+func generateTransactWriteItemsInput(app string, msg ...Message) (*dynamodb.TransactWriteItemsInput, error) {
 	items := make([]types.TransactWriteItem, 0)
 
 	for _, item := range msg {
-		insert, err := generateTransactMessageInsert(cvx.CommandStoreName, item)
+		insert, err := generateTransactMessageInsert(app, item)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot generate transact command insert")
 		}
@@ -38,7 +39,7 @@ func generateTransactWriteItemsInput(cvx *cvxcontext.CevixeContext, msg ...Messa
 	}, nil
 }
 
-func generateTransactMessageInsert(table string, input Message) (*types.TransactWriteItem, error) {
+func generateTransactMessageInsert(app string, input Message) (*types.TransactWriteItem, error) {
 	item, err := ToDynamodb_Map(input)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal message to dynamodb map")
@@ -55,7 +56,7 @@ func generateTransactMessageInsert(table string, input Message) (*types.Transact
 			}
 		}
 	}
-
+	table := fmt.Sprintf("dyn-%s-core-%sstore", app, input.Kind())
 	return &types.TransactWriteItem{
 		Put: &types.Put{
 			TableName:           jsii.String(table),

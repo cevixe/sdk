@@ -19,12 +19,12 @@ type FindOneProps struct {
 
 func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 
-	cvx := cvxcontext.GetCevixeContext(ctx)
-	app := cvx.ApplicationName
+	cvxini := cvxcontext.GetInitContenxt(ctx)
+	app := cvxini.AppName
 	domain := strcase.KebabCase(props.Typename)
 	table := fmt.Sprintf("dyn-%s-%s-statestore", app, domain)
 
-	output, err := cvx.DynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
+	output, err := cvxini.DynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: jsii.String(table),
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: props.ID},

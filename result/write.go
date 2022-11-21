@@ -15,35 +15,37 @@ import (
 )
 
 func Write(ctx context.Context, result Result) error {
-	cvx := cvxcontext.GetCevixeContext(ctx)
-	input, err := generateTransactWriteItemsInput(cvx, result)
+	cvxini := cvxcontext.GetInitContenxt(ctx)
+	statestore := fmt.Sprintf("dyn-%s-%s-statestore", cvxini.AppName, cvxini.DomainName)
+	commandstore := fmt.Sprintf("dyn-%s-core-commandstore", cvxini.AppName)
+	input, err := generateTransactWriteItemsInput(statestore, commandstore, result)
 	if err != nil {
 		return errors.Wrap(err, "cannot generate dynamodb transaction input")
 	}
-	if _, err = cvx.DynamodbClient.TransactWriteItems(ctx, input); err != nil {
+	if _, err = cvxini.DynamodbClient.TransactWriteItems(ctx, input); err != nil {
 		return errors.Wrap(err, "cannot execute dynamodb transaction")
 	}
 	return nil
 }
 
-func generateTransactWriteItemsInput(cvx *cvxcontext.CevixeContext, result Result) (*dynamodb.TransactWriteItemsInput, error) {
+func generateTransactWriteItemsInput(statestore string, commandstore string, result Result) (*dynamodb.TransactWriteItemsInput, error) {
 	items := make([]types.TransactWriteItem, 0)
 
 	for _, item := range result.GetEntities() {
 		if item.Version() == 1 {
-			insert, err := generateTransactEntityInsert(cvx.StateStoreName, item)
+			insert, err := generateTransactEntityInsert(statestore, item)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot generate transact entity insert")
 			}
 			items = append(items, *insert)
 		} else if item.Status() == entity.EntityStatus_Dead {
-			update, err := generateTransactEntityUpdate(cvx.StateStoreName, item)
+			update, err := generateTransactEntityUpdate(statestore, item)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot generate transact entity update")
 			}
 			items = append(items, *update)
 		} else {
-			delete, err := generateTransactEntityDelete(cvx.StateStoreName, item)
+			delete, err := generateTransactEntityDelete(statestore, item)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot generate transact entity delete")
 			}
@@ -52,7 +54,7 @@ func generateTransactWriteItemsInput(cvx *cvxcontext.CevixeContext, result Resul
 	}
 
 	for _, item := range result.GetCommands() {
-		insert, err := generateTransactMessageInsert(cvx.CommandStoreName, item)
+		insert, err := generateTransactMessageInsert(commandstore, item)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot generate transact command insert")
 		}
