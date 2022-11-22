@@ -32,7 +32,6 @@ type Event = Message
 type Command = Message
 
 type messageImpl struct {
-	Message
 	MessageSource       string      `json:"source"`
 	MessageID           string      `json:"id"`
 	MessageKind         MessageKind `json:"kind"`
