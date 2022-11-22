@@ -35,9 +35,9 @@ func ToDynamodb_Map(entity Entity) (map[string]types.AttributeValue, error) {
 	item["__status"] = &types.AttributeValueMemberS{Value: string(impl.EntityStatus)}
 	item["__space"] = &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s", impl.EntityStatus, impl.EntityType)}
 	item["updatedAt"] = &types.AttributeValueMemberS{Value: impl.EntityUpdatedAt.Format(time.RFC3339)}
-	item["updatedBy"] = &types.AttributeValueMemberN{Value: impl.EntityUpdatedBy}
+	item["updatedBy"] = &types.AttributeValueMemberS{Value: impl.EntityUpdatedBy}
 	item["createdAt"] = &types.AttributeValueMemberS{Value: impl.EntityCreatedAt.Format(time.RFC3339)}
-	item["createdBy"] = &types.AttributeValueMemberN{Value: impl.EntityCreatedBy}
+	item["createdBy"] = &types.AttributeValueMemberS{Value: impl.EntityCreatedBy}
 
 	item["__transaction"] = &types.AttributeValueMemberS{Value: impl.LastTransaction}
 	if impl.LastEventTrigger != "" {
