@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,7 +13,18 @@ import (
 
 func ToDynamodb_Map(entity Entity) (map[string]types.AttributeValue, error) {
 	impl := entity.(*entityImpl)
-	item, err := attributevalue.MarshalMap(impl.EntityData)
+
+	entityDataBuffer, err := json.Marshal(impl.EntityData)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot marshal entity data")
+	}
+
+	entityDataMap := make(map[string]interface{})
+	if err = json.Unmarshal(entityDataBuffer, &entityDataMap); err != nil {
+		return nil, errors.Wrap(err, "cannot unmarshal entity data map")
+	}
+
+	item, err := attributevalue.MarshalMap(entityDataMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot generate dynamo map from entity data")
 	}
@@ -44,10 +56,22 @@ func ToDynamodb_Map(entity Entity) (map[string]types.AttributeValue, error) {
 		item["__eventversion"] = &types.AttributeValueMemberNULL{Value: true}
 	}
 	if impl.LastEventData != nil {
-		eventData, err := attributevalue.MarshalMap(impl.LastEventData)
+
+		eventDataBuffer, err := json.Marshal(impl.LastEventData)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot marshal entity last event data")
+		}
+
+		eventDataMap := make(map[string]interface{})
+		if err = json.Unmarshal(eventDataBuffer, &eventDataMap); err != nil {
+			return nil, errors.Wrap(err, "cannot unmarshal entity last event data map")
+		}
+
+		eventData, err := attributevalue.MarshalMap(eventDataMap)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot generate dynamo map from last event data")
 		}
+
 		item["__eventdata"] = &types.AttributeValueMemberM{Value: eventData}
 	} else {
 		item["__eventdata"] = &types.AttributeValueMemberNULL{Value: true}

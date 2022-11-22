@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -23,15 +24,24 @@ func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 	app := cvxini.AppName
 	table := fmt.Sprintf("dyn-%s-%s-statestore", app, props.Domain)
 
-	output, err := cvxini.DynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
+	input := &dynamodb.GetItemInput{
 		TableName: jsii.String(table),
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: props.ID},
 		},
-	})
+	}
+
+	jsonBuffer, _ := json.Marshal(input)
+	fmt.Println(string(jsonBuffer))
+
+	output, err := cvxini.DynamodbClient.GetItem(ctx, input)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get dynamodb entity by id")
+	}
+
+	if output.Item == nil {
+		return nil, nil
 	}
 
 	entity, err := FromDynamodb_TableMap(output.Item)
