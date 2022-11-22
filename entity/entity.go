@@ -104,7 +104,7 @@ func (e *entityImpl) LastEvent() (message.Event, error) {
 	typename := strcase.KebabCase(e.EntityType)
 	eType := e.LastEventType
 	if eType == "" {
-		if e.EntityVersion == 0 {
+		if e.EntityVersion == 1 {
 			eType = "created"
 		} else if e.EntityStatus == EntityStatus_Dead {
 			eType = "deleted"
