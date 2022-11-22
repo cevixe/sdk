@@ -2,7 +2,6 @@ package entity
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -30,9 +29,6 @@ func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 			"id": &types.AttributeValueMemberS{Value: props.ID},
 		},
 	}
-
-	jsonBuffer, _ := json.Marshal(input)
-	fmt.Println(string(jsonBuffer))
 
 	output, err := cvxini.DynamodbClient.GetItem(ctx, input)
 
