@@ -22,11 +22,12 @@ func ToSNS_Entry(msg Message) (*types.PublishBatchRequestEntry, error) {
 	entryId := fmt.Sprintf("%s/%s", msg.Source(), msg.ID())
 
 	return &types.PublishBatchRequestEntry{
-		Id:                jsii.String(entryId),
-		Subject:           jsii.String(msg.Type()),
-		MessageGroupId:    jsii.String(msg.Source()),
-		Message:           jsii.String(string(payload)),
-		MessageAttributes: generateMessageAttributes(msg),
+		Id:                     jsii.String(entryId),
+		Subject:                jsii.String(msg.Type()),
+		MessageGroupId:         jsii.String(msg.Source()),
+		MessageDeduplicationId: jsii.String(fmt.Sprintf("%s/%s", msg.Source(), msg.ID())),
+		Message:                jsii.String(string(payload)),
+		MessageAttributes:      generateMessageAttributes(msg),
 	}, nil
 }
 
@@ -40,10 +41,11 @@ func ToSNS_Input(msg Message) (*sns.PublishInput, error) {
 	}
 
 	return &sns.PublishInput{
-		Subject:           jsii.String(msg.Type()),
-		MessageGroupId:    jsii.String(msg.Source()),
-		Message:           jsii.String(string(payload)),
-		MessageAttributes: generateMessageAttributes(msg),
+		Subject:                jsii.String(msg.Type()),
+		MessageGroupId:         jsii.String(msg.Source()),
+		MessageDeduplicationId: jsii.String(fmt.Sprintf("%s/%s", msg.Source(), msg.ID())),
+		Message:                jsii.String(string(payload)),
+		MessageAttributes:      generateMessageAttributes(msg),
 	}, nil
 }
 
