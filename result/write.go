@@ -2,7 +2,9 @@ package result
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -200,16 +202,19 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 	expressionAttributeNames["#version"] = "version"
 	expressionAttributeValues[":version"] = &types.AttributeValueMemberN{Value: previousVersion}
 
-	return &types.TransactWriteItem{
-		Update: &types.Update{
-			TableName:                 jsii.String(table),
-			Key:                       map[string]types.AttributeValue{"id": item["id"]},
-			UpdateExpression:          jsii.String(updateExpression),
-			ConditionExpression:       jsii.String(conditionExpression),
-			ExpressionAttributeNames:  expressionAttributeNames,
-			ExpressionAttributeValues: expressionAttributeValues,
-		},
-	}, nil
+	update := &types.Update{
+		TableName:                 jsii.String(table),
+		Key:                       map[string]types.AttributeValue{"id": item["id"]},
+		UpdateExpression:          jsii.String(updateExpression),
+		ConditionExpression:       jsii.String(conditionExpression),
+		ExpressionAttributeNames:  expressionAttributeNames,
+		ExpressionAttributeValues: expressionAttributeValues,
+	}
+
+	jsonBuffer, _ := json.Marshal(update)
+	log.Println(string(jsonBuffer))
+
+	return &types.TransactWriteItem{Update: update}, nil
 }
 
 func generateTransactEntityDelete(table string, input entity.Entity) (*types.TransactWriteItem, error) {
@@ -280,14 +285,17 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 	expressionAttributeNames["#version"] = "version"
 	expressionAttributeValues[":version"] = &types.AttributeValueMemberN{Value: previousVersion}
 
-	return &types.TransactWriteItem{
-		Update: &types.Update{
-			TableName:                 jsii.String(table),
-			Key:                       map[string]types.AttributeValue{"id": item["id"]},
-			UpdateExpression:          jsii.String(updateExpression),
-			ConditionExpression:       jsii.String(conditionExpression),
-			ExpressionAttributeNames:  expressionAttributeNames,
-			ExpressionAttributeValues: expressionAttributeValues,
-		},
-	}, nil
+	update := &types.Update{
+		TableName:                 jsii.String(table),
+		Key:                       map[string]types.AttributeValue{"id": item["id"]},
+		UpdateExpression:          jsii.String(updateExpression),
+		ConditionExpression:       jsii.String(conditionExpression),
+		ExpressionAttributeNames:  expressionAttributeNames,
+		ExpressionAttributeValues: expressionAttributeValues,
+	}
+
+	jsonBuffer, _ := json.Marshal(update)
+	log.Println(string(jsonBuffer))
+
+	return &types.TransactWriteItem{Update: update}, nil
 }
