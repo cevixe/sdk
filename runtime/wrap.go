@@ -62,10 +62,17 @@ func createSNSMessageHandler(hdl handler.Handler) interface{} {
 			return nil
 		}
 
-		log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
-			msg.Transaction(), msg.Source(), msg.ID(),
-			len(res.GetEntities()), len(res.GetCommands()))
-		return result.Write(enrichedContext, res)
+		err = result.Write(enrichedContext, res)
+		if err != nil {
+			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
+			return errors.Wrap(err, "unexpected execution error of message handler")
+		} else {
+			log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
+				msg.Transaction(), msg.Source(), msg.ID(),
+				len(res.GetEntities()), len(res.GetCommands()))
+			return nil
+		}
 	}
 }
 
@@ -104,10 +111,17 @@ func createSQSMessageHandler(hdl handler.Handler) interface{} {
 			return nil
 		}
 
-		log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
-			msg.Transaction(), msg.Source(), msg.ID(),
-			len(res.GetEntities()), len(res.GetCommands()))
-		return result.Write(enrichedContext, res)
+		err = result.Write(enrichedContext, res)
+		if err != nil {
+			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
+			return errors.Wrap(err, "unexpected execution error of message handler")
+		} else {
+			log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
+				msg.Transaction(), msg.Source(), msg.ID(),
+				len(res.GetEntities()), len(res.GetCommands()))
+			return nil
+		}
 	}
 }
 
