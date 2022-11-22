@@ -23,6 +23,8 @@ type Entity interface {
 	CreatedAt() time.Time
 	CreatedBy() string
 	LastEvent() (message.Event, error)
+	Mutate(ctx context.Context, newState interface{}) Mutation
+	Delete(ctx context.Context) Deletion
 }
 
 type entityImpl struct {
