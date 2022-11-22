@@ -8,10 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 )
 
-const (
-	CevixeInitContextKey string = "cvxini"
-)
-
 type InitContext struct {
 	AppName        string
 	DomainName     string

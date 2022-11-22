@@ -8,5 +8,5 @@ import (
 func Start(hdl handler.Handler) {
 	ctx := NewContext()
 	lmb := WrapHandler(hdl)
-	lambda.StartWithContext(ctx, lmb)
+	lambda.StartWithOptions(lmb, lambda.WithContext(ctx))
 }

@@ -48,6 +48,13 @@ func createSNSMessageHandler(hdl handler.Handler) interface{} {
 		if err != nil {
 			return errors.Wrap(err, "unsuccessful execution of message handler")
 		}
+		if res == nil {
+			return nil
+		}
+		if len(res.GetCommands()) == 0 &&
+			len(res.GetEntities()) == 0 {
+			return nil
+		}
 
 		return result.Write(enrichedContext, res)
 	}
@@ -71,6 +78,14 @@ func createSQSMessageHandler(hdl handler.Handler) interface{} {
 		res, err := hdl(enrichedContext, msg)
 		if err != nil {
 			return errors.Wrap(err, "unsuccessful execution of message handler")
+		}
+
+		if res == nil {
+			return nil
+		}
+		if len(res.GetCommands()) == 0 &&
+			len(res.GetEntities()) == 0 {
+			return nil
 		}
 
 		return result.Write(enrichedContext, res)

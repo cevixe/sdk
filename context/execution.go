@@ -2,10 +2,6 @@ package context
 
 import "context"
 
-const (
-	CevixeExecutionContextKey string = "cvxexe"
-)
-
 type ExecutionContext struct {
 	Author      string
 	Trigger     string
