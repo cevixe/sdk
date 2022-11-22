@@ -46,16 +46,25 @@ func createSNSMessageHandler(hdl handler.Handler) interface{} {
 		enrichedContext := loadExecutionContext(ctx, msg)
 		res, err := hdl(enrichedContext, msg)
 		if err != nil {
+			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
 			return errors.Wrap(err, "unsuccessful execution of message handler")
 		}
 		if res == nil {
+			log.Printf("trx: %s, event: %s/%s, result: <nil>\n",
+				msg.Transaction(), msg.Source(), msg.ID())
 			return nil
 		}
 		if len(res.GetCommands()) == 0 &&
 			len(res.GetEntities()) == 0 {
+			log.Printf("trx: %s, event: %s/%s, result: <empty>\n",
+				msg.Transaction(), msg.Source(), msg.ID())
 			return nil
 		}
 
+		log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
+			msg.Transaction(), msg.Source(), msg.ID(),
+			len(res.GetEntities()), len(res.GetCommands()))
 		return result.Write(enrichedContext, res)
 	}
 }
