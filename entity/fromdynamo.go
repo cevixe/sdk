@@ -20,9 +20,6 @@ func FromDynamodb_TableMap(input map[string]tabletypes.AttributeValue) (Entity, 
 		return nil, errors.Wrap(err, "invalid dynamodb record")
 	}
 
-	jsonBuffer, _ := json.Marshal(imageMap)
-	fmt.Println(string(jsonBuffer))
-
 	if err := validateEntityMapRequiredFields(imageMap); err != nil {
 		return nil, errors.Wrap(err, "invalid entity map")
 	}
