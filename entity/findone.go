@@ -13,6 +13,7 @@ import (
 )
 
 type FindOneProps struct {
+	Domain   string `field:"required"`
 	Typename string `field:"required"`
 	ID       string `field:"required"`
 }
@@ -21,7 +22,7 @@ func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 
 	cvxini := cvxcontext.GetInitContenxt(ctx)
 	app := cvxini.AppName
-	domain := strcase.KebabCase(props.Typename)
+	domain := strcase.KebabCase(props.Domain)
 	table := fmt.Sprintf("dyn-%s-%s-statestore", app, domain)
 
 	output, err := cvxini.DynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
@@ -30,6 +31,7 @@ func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 			"id": &types.AttributeValueMemberS{Value: props.ID},
 		},
 	})
+
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get dynamodb entity by id")
 	}
@@ -38,5 +40,10 @@ func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot read dynamodb entity map")
 	}
+
+	if entity.Type() != props.Typename {
+		return nil, errors.New("invalid entity typename")
+	}
+
 	return entity, nil
 }

@@ -9,10 +9,10 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	cvxcontext "github.com/cevixe/sdk/context"
 	"github.com/pkg/errors"
-	"github.com/stoewer/go-strcase"
 )
 
 type FindAllProps struct {
+	Domain    string `field:"required"`
 	Typename  string `field:"required"`
 	NextToken string `field:"optional"`
 	Limit     uint64 `field:"optional"`
@@ -22,8 +22,7 @@ func FindAll(ctx context.Context, props *FindAllProps) (EntityPage, error) {
 
 	cvxini := cvxcontext.GetInitContenxt(ctx)
 	app := cvxini.AppName
-	domain := strcase.KebabCase(props.Typename)
-	table := fmt.Sprintf("dyn-%s-%s-statestore", app, domain)
+	table := fmt.Sprintf("dyn-%s-%s-statestore", app, props.Domain)
 
 	input := &dynamodb.QueryInput{
 		TableName:              jsii.String(table),
@@ -34,7 +33,7 @@ func FindAll(ctx context.Context, props *FindAllProps) (EntityPage, error) {
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":space": &types.AttributeValueMemberS{
-				Value: fmt.Sprintf("%s#%s", EntityStatus_Alive, domain),
+				Value: fmt.Sprintf("%s#%s", EntityStatus_Alive, props.Typename),
 			},
 		},
 		ScanIndexForward: jsii.Bool(false),
@@ -51,7 +50,7 @@ func FindAll(ctx context.Context, props *FindAllProps) (EntityPage, error) {
 	if props.NextToken != "" {
 		input.ExclusiveStartKey = map[string]types.AttributeValue{
 			"__space": &types.AttributeValueMemberS{
-				Value: fmt.Sprintf("%s#%s", EntityStatus_Alive, domain),
+				Value: fmt.Sprintf("%s#%s", EntityStatus_Alive, props.Typename),
 			},
 			"id": &types.AttributeValueMemberS{
 				Value: props.NextToken,

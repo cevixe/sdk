@@ -9,10 +9,10 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	cvxcontext "github.com/cevixe/sdk/context"
 	"github.com/pkg/errors"
-	"github.com/stoewer/go-strcase"
 )
 
 type FindByProps struct {
+	Domain     string `field:"required"`
 	Typename   string `field:"required"`
 	IndexName  string `field:"required"`
 	IndexValue string `field:"required"`
@@ -24,20 +24,24 @@ func FindBy(ctx context.Context, props *FindByProps) (EntityPage, error) {
 
 	cvxini := cvxcontext.GetInitContenxt(ctx)
 	app := cvxini.AppName
-	domain := strcase.KebabCase(props.Typename)
-	table := fmt.Sprintf("dyn-%s-%s-statestore", app, domain)
+	table := fmt.Sprintf("dyn-%s-%s-statestore", app, props.Domain)
 
 	partitionKey := fmt.Sprintf("__%s-pk", props.IndexName)
 	input := &dynamodb.QueryInput{
 		TableName:              jsii.String(table),
 		IndexName:              jsii.String(props.IndexName),
 		KeyConditionExpression: jsii.String("#index = :value"),
+		FilterExpression:       jsii.String("#type = :type"),
 		ExpressionAttributeNames: map[string]string{
 			"#index": partitionKey,
+			"#type":  "__typename",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":value": &types.AttributeValueMemberS{
 				Value: props.IndexValue,
+			},
+			":type": &types.AttributeValueMemberS{
+				Value: props.Typename,
 			},
 		},
 		ScanIndexForward: jsii.Bool(false),
