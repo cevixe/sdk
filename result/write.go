@@ -253,9 +253,21 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 	for _, field := range fieldsToUpdate {
 		fieldName := fmt.Sprintf("#%s", field)
 		fieldValue := fmt.Sprintf(":%s", field)
-		expressionSet[fieldName] = fieldValue
-		expressionAttributeNames[fieldName] = field
-		expressionAttributeValues[fieldValue] = item[field]
+		value := item[field]
+		if value == nil {
+			expressionAttributeNames[fieldName] = field
+			expressionRemove = append(expressionRemove, fieldName)
+		} else {
+			switch value.(type) {
+			case *types.AttributeValueMemberNULL:
+				expressionRemove = append(expressionRemove, fieldName)
+				expressionAttributeNames[fieldName] = field
+			default:
+				expressionSet[fieldName] = fieldValue
+				expressionAttributeNames[fieldName] = field
+				expressionAttributeValues[fieldValue] = value
+			}
+		}
 	}
 
 	if len(expressionSet) > 0 {
@@ -274,14 +286,14 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 		updateExpression = updateExpression[:len(updateExpression)-1]
 	}
 
-	conditionExpression := "#__status = :__status AND #version = :version"
+	conditionExpression := "#__status = :__expectedStatus AND #version = :expectedVersion"
 
 	expressionAttributeNames["#__status"] = "__status"
-	expressionAttributeValues[":__status"] = &types.AttributeValueMemberS{Value: string(entity.EntityStatus_Alive)}
+	expressionAttributeValues[":__expectedStatus"] = &types.AttributeValueMemberS{Value: string(entity.EntityStatus_Alive)}
 
 	previousVersion := strconv.FormatUint(input.Version()-1, 10)
 	expressionAttributeNames["#version"] = "version"
-	expressionAttributeValues[":version"] = &types.AttributeValueMemberN{Value: previousVersion}
+	expressionAttributeValues[":expectedVersion"] = &types.AttributeValueMemberN{Value: previousVersion}
 
 	update := &types.Update{
 		TableName:                 jsii.String(table),
