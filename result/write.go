@@ -133,6 +133,8 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal entity to dynamodb map")
 	}
+	itemBuffer, _ := json.Marshal(item)
+	log.Println(string(itemBuffer))
 
 	updateExpression := ""
 	expressionAttributeNames := make(map[string]string)
@@ -141,12 +143,12 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 	expressionSet := make(map[string]string)
 	expressionRemove := make([]string, 0)
 
-	// #set( $reservedProps = ["updatedAt","updatedBy","__transaction","__status","__space"] )
 	propsToAvoid := map[string]bool{
 		"__typename": true,
 		"id":         true,
 		"version":    true,
 		"__status":   true,
+		"__space":    true,
 		"createdAt":  true,
 		"createdBy":  true,
 	}
@@ -159,21 +161,19 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 			name := fmt.Sprintf("#%s", key)
 			expressionAttributeNames[name] = key
 			expressionRemove = append(expressionRemove, name)
-			continue
-		}
-		switch value.(type) {
-		case *types.AttributeValueMemberNULL:
-			fieldName := fmt.Sprintf("#%s", key)
-			expressionRemove = append(expressionRemove, fieldName)
-			expressionAttributeNames[fieldName] = key
-			continue
-		default:
-			fieldName := fmt.Sprintf("#%s", key)
-			fieldValue := fmt.Sprintf(":%s", key)
-			expressionSet[fieldName] = fieldValue
-			expressionAttributeNames[fieldName] = key
-			expressionAttributeValues[fieldValue] = value
-			continue
+		} else {
+			switch value.(type) {
+			case *types.AttributeValueMemberNULL:
+				fieldName := fmt.Sprintf("#%s", key)
+				expressionRemove = append(expressionRemove, fieldName)
+				expressionAttributeNames[fieldName] = key
+			default:
+				fieldName := fmt.Sprintf("#%s", key)
+				fieldValue := fmt.Sprintf(":%s", key)
+				expressionSet[fieldName] = fieldValue
+				expressionAttributeNames[fieldName] = key
+				expressionAttributeValues[fieldValue] = value
+			}
 		}
 	}
 
@@ -187,7 +187,7 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 
 	if len(expressionRemove) > 0 {
 		updateExpression = fmt.Sprintf("%s %s", updateExpression, "REMOVE")
-		for _, key := range expressionSet {
+		for _, key := range expressionRemove {
 			updateExpression = fmt.Sprintf("%s %s,", updateExpression, key)
 		}
 		updateExpression = updateExpression[:len(updateExpression)-1]
@@ -232,12 +232,8 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 
 	for _, idx := range input.Indexes() {
 		pk := fmt.Sprintf("__%s-pk", idx)
-		sk := fmt.Sprintf("__%s-sk", idx)
-
 		expressionRemove = append(expressionRemove, fmt.Sprintf("#%s", pk))
-		expressionRemove = append(expressionRemove, fmt.Sprintf("#%s", sk))
 		expressionAttributeNames[fmt.Sprintf("#%s", pk)] = pk
-		expressionAttributeNames[fmt.Sprintf("#%s", sk)] = sk
 	}
 
 	fieldsToUpdate := []string{
@@ -270,7 +266,7 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 
 	if len(expressionRemove) > 0 {
 		updateExpression = fmt.Sprintf("%s %s", updateExpression, "REMOVE")
-		for _, key := range expressionSet {
+		for _, key := range expressionRemove {
 			updateExpression = fmt.Sprintf("%s %s,", updateExpression, key)
 		}
 		updateExpression = updateExpression[:len(updateExpression)-1]
