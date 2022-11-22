@@ -2,9 +2,7 @@ package result
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -133,8 +131,6 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal entity to dynamodb map")
 	}
-	itemBuffer, _ := json.Marshal(item)
-	log.Println(string(itemBuffer))
 
 	updateExpression := ""
 	expressionAttributeNames := make(map[string]string)
@@ -211,9 +207,6 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
 
-	jsonBuffer, _ := json.Marshal(update)
-	log.Println(string(jsonBuffer))
-
 	return &types.TransactWriteItem{Update: update}, nil
 }
 
@@ -222,8 +215,6 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal entity to dynamodb map")
 	}
-	itemBuffer, _ := json.Marshal(item)
-	log.Println(string(itemBuffer))
 
 	updateExpression := ""
 	expressionAttributeNames := make(map[string]string)
@@ -303,9 +294,6 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 		ExpressionAttributeNames:  expressionAttributeNames,
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
-
-	jsonBuffer, _ := json.Marshal(update)
-	log.Println(string(jsonBuffer))
 
 	return &types.TransactWriteItem{Update: update}, nil
 }
