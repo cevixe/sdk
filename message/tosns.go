@@ -56,7 +56,7 @@ func newStringMessageAttribute(value string) types.MessageAttributeValue {
 
 func generateMessageAttributes(msg Message) map[string]types.MessageAttributeValue {
 
-	return map[string]types.MessageAttributeValue{
+	attributesMap := map[string]types.MessageAttributeValue{
 		"source":       newStringMessageAttribute(msg.Source()),
 		"id":           newStringMessageAttribute(msg.ID()),
 		"kind":         newStringMessageAttribute(string(msg.Kind())),
@@ -65,7 +65,10 @@ func generateMessageAttributes(msg Message) map[string]types.MessageAttributeVal
 		"contentType":  newStringMessageAttribute(msg.ContentType()),
 		"encodingType": newStringMessageAttribute(msg.EncodingType()),
 		"author":       newStringMessageAttribute(msg.Author()),
-		"trigger":      newStringMessageAttribute(msg.Trigger()),
 		"transaction":  newStringMessageAttribute(msg.Transaction()),
 	}
+	if msg.Trigger() != "" {
+		attributesMap["trigger"] = newStringMessageAttribute(msg.Trigger())
+	}
+	return attributesMap
 }

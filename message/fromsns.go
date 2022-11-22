@@ -68,6 +68,7 @@ func FromSNS(input *events.SNSEntity) (Message, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "message transaction not found")
 	}
+	messageTrigger, _ := getSNSEntityStringAttribute(input, "transaction")
 
 	msg.MessageSource = messageSource
 	msg.MessageID = messageID
@@ -78,6 +79,7 @@ func FromSNS(input *events.SNSEntity) (Message, error) {
 	msg.MessageEncodingType = messageEncodingType
 	msg.MessageData = messageData
 	msg.MessageAuthor = messageAuthor
+	msg.MessageTrigger = messageTrigger
 	msg.MessageTransaction = messageTransaction
 
 	return msg, nil
