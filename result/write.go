@@ -40,7 +40,7 @@ func generateTransactWriteItemsInput(statestore string, commandstore string, res
 				return nil, errors.Wrap(err, "cannot generate transact entity insert")
 			}
 			items = append(items, *insert)
-		} else if item.Status() == entity.EntityStatus_Dead {
+		} else if item.Status() == entity.EntityStatus_Alive {
 			update, err := generateTransactEntityUpdate(statestore, item)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot generate transact entity update")
