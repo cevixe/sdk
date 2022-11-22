@@ -46,29 +46,31 @@ func createSNSMessageHandler(hdl handler.Handler) interface{} {
 		enrichedContext := loadExecutionContext(ctx, msg)
 		res, err := hdl(enrichedContext, msg)
 		if err != nil {
-			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Error: %v\n",
 				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
 			return errors.Wrap(err, "unsuccessful execution of message handler")
 		}
+
 		if res == nil {
-			log.Printf("trx: %s, event: %s/%s, result: <nil>\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Result: <nil>\n",
 				msg.Transaction(), msg.Source(), msg.ID())
 			return nil
 		}
+
 		if len(res.GetCommands()) == 0 &&
 			len(res.GetEntities()) == 0 {
-			log.Printf("trx: %s, event: %s/%s, result: <empty>\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Result: <empty>\n",
 				msg.Transaction(), msg.Source(), msg.ID())
 			return nil
 		}
 
 		err = result.Write(enrichedContext, res)
 		if err != nil {
-			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Error: %v\n",
 				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
 			return errors.Wrap(err, "unexpected execution error of message handler")
 		} else {
-			log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Result: %dE/%dC\n",
 				msg.Transaction(), msg.Source(), msg.ID(),
 				len(res.GetEntities()), len(res.GetCommands()))
 			return nil
@@ -93,31 +95,31 @@ func createSQSMessageHandler(hdl handler.Handler) interface{} {
 		enrichedContext := loadExecutionContext(ctx, msg)
 		res, err := hdl(enrichedContext, msg)
 		if err != nil {
-			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Error: %v\n",
 				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
 			return errors.Wrap(err, "unsuccessful execution of message handler")
 		}
 
 		if res == nil {
-			log.Printf("trx: %s, event: %s/%s, result: <nil>\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Result: <nil>\n",
 				msg.Transaction(), msg.Source(), msg.ID())
 			return nil
 		}
 
 		if len(res.GetCommands()) == 0 &&
 			len(res.GetEntities()) == 0 {
-			log.Printf("trx: %s, event: %s/%s, result: <empty>\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Result: <empty>\n",
 				msg.Transaction(), msg.Source(), msg.ID())
 			return nil
 		}
 
 		err = result.Write(enrichedContext, res)
 		if err != nil {
-			log.Printf("trx: %s, event: %s/%s, error: %v\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Error: %v\n",
 				msg.Transaction(), msg.Source(), msg.ID(), errors.Cause(err))
 			return errors.Wrap(err, "unexpected execution error of message handler")
 		} else {
-			log.Printf("trx: %s, event: %s/%s, result: %de/%dc\n",
+			fmt.Printf("CVX Transaction: %s Event: %s/%s Result: %dE/%dC\n",
 				msg.Transaction(), msg.Source(), msg.ID(),
 				len(res.GetEntities()), len(res.GetCommands()))
 			return nil
