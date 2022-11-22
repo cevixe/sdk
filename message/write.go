@@ -57,14 +57,28 @@ func generateTransactMessageInsert(app string, input Message) (*types.TransactWr
 		}
 	}
 	table := fmt.Sprintf("dyn-%s-core-%sstore", app, input.Kind())
-	return &types.TransactWriteItem{
-		Put: &types.Put{
-			TableName:           jsii.String(table),
-			Item:                item,
-			ConditionExpression: jsii.String("attribute_not_exists(#id)"),
-			ExpressionAttributeNames: map[string]string{
-				"#id": "id",
+	if input.Kind() == MessageKind_Command {
+		return &types.TransactWriteItem{
+			Put: &types.Put{
+				TableName:           jsii.String(table),
+				Item:                item,
+				ConditionExpression: jsii.String("attribute_not_exists(#id)"),
+				ExpressionAttributeNames: map[string]string{
+					"#id": "id",
+				},
 			},
-		},
-	}, nil
+		}, nil
+	} else {
+		return &types.TransactWriteItem{
+			Put: &types.Put{
+				TableName:           jsii.String(table),
+				Item:                item,
+				ConditionExpression: jsii.String("attribute_not_exists(#source) AND attribute_not_exists(#id)"),
+				ExpressionAttributeNames: map[string]string{
+					"#source": "source",
+					"#id":     "id",
+				},
+			},
+		}, nil
+	}
 }
