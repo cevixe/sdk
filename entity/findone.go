@@ -9,7 +9,6 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	cvxcontext "github.com/cevixe/sdk/context"
 	"github.com/pkg/errors"
-	"github.com/stoewer/go-strcase"
 )
 
 type FindOneProps struct {
@@ -22,8 +21,7 @@ func FindOne(ctx context.Context, props *FindOneProps) (Entity, error) {
 
 	cvxini := cvxcontext.GetInitContenxt(ctx)
 	app := cvxini.AppName
-	domain := strcase.KebabCase(props.Domain)
-	table := fmt.Sprintf("dyn-%s-%s-statestore", app, domain)
+	table := fmt.Sprintf("dyn-%s-%s-statestore", app, props.Domain)
 
 	output, err := cvxini.DynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: jsii.String(table),

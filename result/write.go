@@ -2,6 +2,7 @@ package result
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -60,6 +61,9 @@ func generateTransactWriteItemsInput(statestore string, commandstore string, res
 		}
 		items = append(items, *insert)
 	}
+
+	jsonBuffer, _ := json.Marshal(items)
+	fmt.Println(string(jsonBuffer))
 
 	return &dynamodb.TransactWriteItemsInput{
 		TransactItems: items,
