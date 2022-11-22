@@ -222,6 +222,8 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal entity to dynamodb map")
 	}
+	itemBuffer, _ := json.Marshal(item)
+	log.Println(string(itemBuffer))
 
 	updateExpression := ""
 	expressionAttributeNames := make(map[string]string)
