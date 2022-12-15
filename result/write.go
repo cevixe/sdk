@@ -11,6 +11,7 @@ import (
 	cvxcontext "github.com/cevixe/sdk/context"
 	"github.com/cevixe/sdk/entity"
 	"github.com/cevixe/sdk/message"
+	"github.com/oklog/ulid/v2"
 	"github.com/pkg/errors"
 )
 
@@ -150,22 +151,21 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 	}
 
 	for key, value := range item {
+		alias := ulid.Make().String()
+		fieldName := fmt.Sprintf("#%s", alias)
+		fieldValue := fmt.Sprintf(":%s", alias)
 		if propsToAvoid[key] {
 			continue
 		}
 		if value == nil {
-			name := fmt.Sprintf("#%s", key)
-			expressionAttributeNames[name] = key
-			expressionRemove = append(expressionRemove, name)
+			expressionAttributeNames[fieldName] = key
+			expressionRemove = append(expressionRemove, fieldName)
 		} else {
 			switch value.(type) {
 			case *types.AttributeValueMemberNULL:
-				fieldName := fmt.Sprintf("#%s", key)
-				expressionRemove = append(expressionRemove, fieldName)
 				expressionAttributeNames[fieldName] = key
+				expressionRemove = append(expressionRemove, fieldName)
 			default:
-				fieldName := fmt.Sprintf("#%s", key)
-				fieldValue := fmt.Sprintf(":%s", key)
 				expressionSet[fieldName] = fieldValue
 				expressionAttributeNames[fieldName] = key
 				expressionAttributeValues[fieldValue] = value
@@ -189,10 +189,10 @@ func generateTransactEntityUpdate(table string, input entity.Entity) (*types.Tra
 		updateExpression = updateExpression[:len(updateExpression)-1]
 	}
 
-	conditionExpression := "#__status = :__status AND #version = :version"
+	conditionExpression := "#status = :status AND #version = :version"
 
-	expressionAttributeNames["#__status"] = "__status"
-	expressionAttributeValues[":__status"] = &types.AttributeValueMemberS{Value: string(entity.EntityStatus_Alive)}
+	expressionAttributeNames["#status"] = "__status"
+	expressionAttributeValues[":status"] = &types.AttributeValueMemberS{Value: string(entity.EntityStatus_Alive)}
 
 	previousVersion := strconv.FormatUint(input.Version()-1, 10)
 	expressionAttributeNames["#version"] = "version"
@@ -224,9 +224,11 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 	expressionRemove := make([]string, 0)
 
 	for _, idx := range input.Indexes() {
+		alias := ulid.Make().String()
 		pk := fmt.Sprintf("__%s-pk", idx)
-		expressionRemove = append(expressionRemove, fmt.Sprintf("#%s", pk))
-		expressionAttributeNames[fmt.Sprintf("#%s", pk)] = pk
+		fieldName := fmt.Sprintf("#%s", alias)
+		expressionRemove = append(expressionRemove, fieldName)
+		expressionAttributeNames[fieldName] = pk
 	}
 
 	fieldsToUpdate := []string{
@@ -242,8 +244,9 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 	}
 
 	for _, field := range fieldsToUpdate {
-		fieldName := fmt.Sprintf("#%s", field)
-		fieldValue := fmt.Sprintf(":%s", field)
+		alias := ulid.Make().String()
+		fieldName := fmt.Sprintf("#%s", alias)
+		fieldValue := fmt.Sprintf(":%s", alias)
 		value := item[field]
 		if value == nil {
 			expressionAttributeNames[fieldName] = field
@@ -251,8 +254,8 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 		} else {
 			switch value.(type) {
 			case *types.AttributeValueMemberNULL:
-				expressionRemove = append(expressionRemove, fieldName)
 				expressionAttributeNames[fieldName] = field
+				expressionRemove = append(expressionRemove, fieldName)
 			default:
 				expressionSet[fieldName] = fieldValue
 				expressionAttributeNames[fieldName] = field
@@ -277,10 +280,10 @@ func generateTransactEntityDelete(table string, input entity.Entity) (*types.Tra
 		updateExpression = updateExpression[:len(updateExpression)-1]
 	}
 
-	conditionExpression := "#__status = :__expectedStatus AND #version = :expectedVersion"
+	conditionExpression := "#status = :expectedStatus AND #version = :expectedVersion"
 
-	expressionAttributeNames["#__status"] = "__status"
-	expressionAttributeValues[":__expectedStatus"] = &types.AttributeValueMemberS{Value: string(entity.EntityStatus_Alive)}
+	expressionAttributeNames["#status"] = "__status"
+	expressionAttributeValues[":expectedStatus"] = &types.AttributeValueMemberS{Value: string(entity.EntityStatus_Alive)}
 
 	previousVersion := strconv.FormatUint(input.Version()-1, 10)
 	expressionAttributeNames["#version"] = "version"
